@@ -1,38 +1,92 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Translator App</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title> Universal Translator</title>
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; text-align: center; padding: 40px; }
+        textarea { width: 80%; height: 120px; padding: 10px; }
+        select, button { padding: 8px 12px; margin: 10px; }
+        .result { margin-top: 20px; font-size: 1.2em; background: white; padding: 15px; display: inline-block; width: 80%; border-radius: 8px; position: relative; }
+        .error { color: red; font-weight: bold; margin-top: 10px; }
+        .btn-container { margin-top: 10px; }
+        button.copy-btn { margin-left: 10px; }
+    </style>
 </head>
 <body>
-    <h2>🌐 Django Translator App</h2>
-    <form method="POST">
+    <h1> Translator App</h1>
+
+    {% if error_message %}
+        <div class="error">{{ error_message }}</div>
+    {% endif %}
+
+    <form method="POST" id="translatorForm">
         {% csrf_token %}
-        <textarea name="input_text" rows="5" cols="50" placeholder="Enter text">{{ input_text }}</textarea><br>
+        <textarea name="input_text" id="inputText" placeholder="Enter text...">{{ input_text }}</textarea><br>
 
-        <label>From:</label>
-        <select name="source_lang">
-            {% for code, lang in languages.items %}
-                <option value="{{ code }}" {% if code == source_lang %}selected{% endif %}>{{ lang }}</option>
+        <select name="source_lang" id="sourceLang">
+            {% for code, name in languages.items %}
+                <option value="{{ code }}" {% if code == source_lang %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
         </select>
 
-        <label>To:</label>
-        <select name="target_lang">
-            {% for code, lang in languages.items %}
-                <option value="{{ code }}" {% if code == target_lang %}selected{% endif %}>{{ lang }}</option>
+        <button type="button" id="swapBtn">🔄</button>
+
+        <select name="target_lang" id="targetLang">
+            {% for code, name in languages.items %}
+                {% if code != "auto" %}
+                    <option value="{{ code }}" {% if code == target_lang %}selected{% endif %}>{{ name }}</option>
+                {% endif %}
             {% endfor %}
-        </select>
+        </select><br>
 
         <button type="submit">Translate</button>
     </form>
 
     {% if translated_text %}
-    <h3>Translated Text:</h3>
-    <textarea rows="5" cols="50" readonly>{{ translated_text }}</textarea>
+        <div class="result" id="translatedResult">
+            <strong>Translation:</strong><br>
+            <span id="translationText">{{ translated_text }}</span>
+            <button class="copy-btn" id="copyBtn">📋</button>
+        </div>
     {% endif %}
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#sourceLang').select2({ width: '200px' });
+            $('#targetLang').select2({ width: '200px' });
+
+            // Swap Button
+            $('#swapBtn').click(function() {
+                let sourceVal = $('#sourceLang').val();
+                let targetVal = $('#targetLang').val();
+                let inputText = $('#inputText').val();
+                let translatedText = $('#translationText').text() || '';
+
+                // Swap values
+                $('#sourceLang').val(targetVal).trigger('change');
+                $('#targetLang').val(sourceVal).trigger('change');
+                $('#inputText').val(translatedText);
+                $('#translationText').text(inputText);
+            });
+
+            // Clipboard Copy Button
+            $('#copyBtn').click(function() {
+                let text = $('#translationText').text();
+                navigator.clipboard.writeText(text).then(function() {
+                    alert('✅ Translation copied to clipboard!');
+                }, function(err) {
+                    alert('❌ Failed to copy: ' + err);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
