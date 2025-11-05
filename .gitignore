@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# Environment variables
+.env
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# VSCode and JetBrains
+.vscode/
+.idea/
+
+# macOS / Windows junk
+.DS_Store
+Thumbs.db
+
+# Pip cache
+pip-log.txt
+
+# Pytest / Coverage
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# Migration backups
+*/migrations/__pycache__/
+*/migrations/*.pyc
+
+# Node/npm (if you use frontend)
+node_modules/
+build/
+dist/

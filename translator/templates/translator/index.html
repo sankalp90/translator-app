@@ -1,0 +1,38 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Translator App</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>🌐 Django Translator App</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <textarea name="input_text" rows="5" cols="50" placeholder="Enter text">{{ input_text }}</textarea><br>
+
+        <label>From:</label>
+        <select name="source_lang">
+            {% for code, lang in languages.items %}
+                <option value="{{ code }}" {% if code == source_lang %}selected{% endif %}>{{ lang }}</option>
+            {% endfor %}
+        </select>
+
+        <label>To:</label>
+        <select name="target_lang">
+            {% for code, lang in languages.items %}
+                <option value="{{ code }}" {% if code == target_lang %}selected{% endif %}>{{ lang }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Translate</button>
+    </form>
+
+    {% if translated_text %}
+    <h3>Translated Text:</h3>
+    <textarea rows="5" cols="50" readonly>{{ translated_text }}</textarea>
+    {% endif %}
+</body>
+</html>
