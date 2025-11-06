@@ -1,9 +1,25 @@
 from django.shortcuts import render
 from deep_translator import GoogleTranslator
-from deep_translator.exceptions import NotValidPayload
+from PIL import Image
+import pytesseract
+import fitz  # PyMuPDF
+from docx import Document
 
-# Full language dictionary with readable names
-LANGUAGES = {
+
+
+# Point pytesseract to your Tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# Create your views here
+def index(request):
+    translated_text = ''
+    input_text = ''
+    source_lang = ''
+    target_lang = ''
+    error_message = ''
+
+    # Languages dictionary
+    languages = {
     'auto': 'Auto Detect',
     'af': 'Afrikaans', 'sq': 'Albanian', 'am': 'Amharic', 'ar': 'Arabic',
     'hy': 'Armenian', 'as': 'Assamese', 'ay': 'Aymara', 'az': 'Azerbaijani',
@@ -29,42 +45,60 @@ LANGUAGES = {
     'th': 'Thai', 'tr': 'Turkish', 'uk': 'Ukrainian', 'ur': 'Urdu', 'uz': 'Uzbek',
     'vi': 'Vietnamese', 'cy': 'Welsh', 'xh': 'Xhosa', 'yi': 'Yiddish', 'yo': 'Yoruba',
     'zu': 'Zulu'
-}
-
-def index(request):
-    translated_text = ''
-    input_text = ''
-    source_lang = 'auto'
-    target_lang = 'en'
-    error_message = ''
+    }
 
     if request.method == 'POST':
-        input_text = request.POST.get('input_text', '').strip()
-        source_lang = request.POST.get('source_lang', 'auto')
-        target_lang = request.POST.get('target_lang', 'en')
+        source_lang = request.POST.get('source_lang')
+        target_lang = request.POST.get('target_lang')
 
-        if not input_text:
-            error_message = "⚠️ Please enter some text."
-        elif len(input_text) > 5000:
-            error_message = "⚠️ Text too long! Max 5000 characters."
-        else:
-            try:
-                translated_text = GoogleTranslator(
-                    source=source_lang,
-                    target=target_lang
-                ).translate(input_text)
-            except NotValidPayload:
-                error_message = "⚠️ Invalid input for translation."
-            except Exception as e:
-                error_message = f"❌ Translation failed: {str(e)}"
+        # 1️ Text translation
+        if 'input_text' in request.POST and request.POST.get('input_text').strip():
+            input_text = request.POST.get('input_text')
+            if len(input_text) > 5000:
+                error_message = 'Text too long! Maximum 5000 characters allowed.'
+            else:
+                translated_text = GoogleTranslator(source=source_lang, target=target_lang).translate(input_text)
+
+        # 2️ Image translation
+        elif 'image' in request.FILES:
+            image_file = request.FILES['image']
+            image = Image.open(image_file)
+            extracted_text = pytesseract.image_to_string(image)
+            if extracted_text.strip():
+                translated_text = GoogleTranslator(source=source_lang, target=target_lang).translate(extracted_text)
+            else:
+                error_message = "No text found in the image."
+
+        # 3️ Document translation (PDF or Word)
+        elif 'document' in request.FILES:
+            doc_file = request.FILES['document']
+            file_name = doc_file.name.lower()
+            full_text = ''
+
+            if file_name.endswith('.pdf'):
+                doc = fitz.open(stream=doc_file.read(), filetype='pdf')
+                for page in doc:
+                    full_text += page.get_text()
+            elif file_name.endswith('.docx'):
+                doc = Document(doc_file)
+                for para in doc.paragraphs:
+                    full_text += para.text + '\n'
+            elif file_name.endswith('.txt'):
+                full_text = doc_file.read().decode('utf-8')
+            else:
+                error_message = "Unsupported document format!"
+            
+            if full_text.strip() and not error_message:
+                translated_text = GoogleTranslator(source=source_lang, target=target_lang).translate(full_text)
+            elif not full_text.strip():
+                error_message = "No text found in the document."
 
     context = {
-        'languages': LANGUAGES,
+        'languages': languages,
         'translated_text': translated_text,
         'input_text': input_text,
         'source_lang': source_lang,
         'target_lang': target_lang,
         'error_message': error_message
     }
-
     return render(request, 'translator/index.html', context)

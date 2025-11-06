@@ -3,14 +3,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title> Universal Translator</title>
-
+    <title> GloboLingo</title>
+   
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         body { font-family: Arial, sans-serif; background-color: #f5f5f5; text-align: center; padding: 40px; }
         textarea { width: 80%; height: 120px; padding: 10px; }
-        select, button { padding: 8px 12px; margin: 10px; }
+        select, button, input[type=file] { padding: 8px 12px; margin: 10px; }
         .result { margin-top: 20px; font-size: 1.2em; background: white; padding: 15px; display: inline-block; width: 80%; border-radius: 8px; position: relative; }
         .error { color: red; font-weight: bold; margin-top: 10px; }
         .btn-container { margin-top: 10px; }
@@ -18,23 +18,40 @@
     </style>
 </head>
 <body>
-    <h1> Translator App</h1>
+    <h1>🌍 GlobooLingoo</h1>
 
     {% if error_message %}
         <div class="error">{{ error_message }}</div>
     {% endif %}
 
-    <form method="POST" id="translatorForm">
+    <form method="POST" enctype="multipart/form-data" id="translatorForm">
         {% csrf_token %}
+        
+        <!-- Text translation -->
         <textarea name="input_text" id="inputText" placeholder="Enter text...">{{ input_text }}</textarea><br>
 
+        <!-- File uploads with instructions -->
+        <div>
+            <label for="image"><strong>📸 Upload an Image:</strong></label><br>
+            <small>Upload an image containing text — the app will extract and translate it.</small><br>
+            <input type="file" id="image" name="image" accept="image/*"><br><br>
+        </div>
+
+        <div>
+            <label for="document"><strong>📄 Upload a Document:</strong></label><br>
+            <small>Upload a text, PDF, or Word file to translate its contents.</small><br>
+            <input type="file" id="document" name="document" accept=".txt,.pdf,.docx"><br>
+        </div>
+
+
+        <!-- Language selection -->
         <select name="source_lang" id="sourceLang">
             {% for code, name in languages.items %}
                 <option value="{{ code }}" {% if code == source_lang %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
         </select>
 
-        <button type="button" id="swapBtn">🔄</button>
+        <button type="button" id="swapBtn">🔄 Swap</button>
 
         <select name="target_lang" id="targetLang">
             {% for code, name in languages.items %}
@@ -51,11 +68,11 @@
         <div class="result" id="translatedResult">
             <strong>Translation:</strong><br>
             <span id="translationText">{{ translated_text }}</span>
-            <button class="copy-btn" id="copyBtn">📋</button>
+            <button class="copy-btn" id="copyBtn">📋 Copy</button>
         </div>
     {% endif %}
 
-    <!-- Select2 JS -->
+    <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -70,7 +87,7 @@
                 let inputText = $('#inputText').val();
                 let translatedText = $('#translationText').text() || '';
 
-                // Swap values
+                if (sourceVal === 'auto') return; // prevent swapping auto-detect
                 $('#sourceLang').val(targetVal).trigger('change');
                 $('#targetLang').val(sourceVal).trigger('change');
                 $('#inputText').val(translatedText);
