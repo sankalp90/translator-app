@@ -8,11 +8,6 @@ from docx import Document
 # Use the Linux Tesseract path
 pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-
-
-# Point pytesseract to your Tesseract executable
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 # Create your views here
 def index(request):
     translated_text = ''
