@@ -1,33 +1,31 @@
-# Use official Python slim image
+# Use official Python base image
 FROM python:3.13-slim
 
 # Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies including Tesseract
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+# Set work directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y build-essential libtesseract-dev tesseract-ocr && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy the rest of the project
+# Copy project files
 COPY . .
 
-# Collect static files (optional)
-RUN python manage.py collectstatic --noinput
-
-# Run migrations (optional)
+# Run migrations (optional, can also do on first container run)
 RUN python manage.py migrate
 
-# Set the command to run the app with Gunicorn
+# Expose port
+EXPOSE 10000
+
+# Run the app with Gunicorn
 CMD ["gunicorn", "translator_project.wsgi:application", "--bind", "0.0.0.0:10000"]
