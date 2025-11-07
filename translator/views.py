@@ -5,12 +5,8 @@ import pytesseract
 import fitz  # PyMuPDF
 from docx import Document
 
-import os
-
-if os.name == "nt":  # Windows
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-else:  # Linux (Docker / Render)
-    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+# Use the Linux Tesseract path
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 
 
